@@ -1,0 +1,161 @@
+# skrip untuk menampilkan perintah dan pengaturan yang sering dipakai untuk program:
+# ~apt-cache
+# ~apt-get
+# ~dpkg
+
+# perintah-perintah dasar
+nano /var/log/apt/history.log
+nano /var/log/dpkg.log
+nano /var/lib/dpkg/arch
+nano /var/lib/dpkg/status
+nano /etc/apt/sources.list
+nano /etc/apt/preference
+nano /etc/apt/apt.conf
+ls /var/lib/apt/lists
+ls /var/cache/apt/archives
+apt-get upgrade
+apt-get dist-upgrade
+apt-get autoremove 
+apt-get remove <package_name>
+apt-get check
+apt-get download <package_name>
+apt-get changelog <package_name>
+apt-get build-dep <package_name>
+apt-get install <package_name>
+apt-get install <package_name>-
+apt-get install <package_name> --no-upgrade
+apt-get install <package_name> --only-upgrade
+apt-get install <package_name>=version
+apt-get install <package_name>:i386
+apt-get install -t <release> <package_name>
+apt-get install --reinstall <package_name>
+apt-get source <package_name>
+apt-get --download-only source <package_name>
+apt-get --compile source <package_name>
+apt-get -f install
+apt-get clean
+apt-get autoclean
+apt-cache stats
+apt-cache pkgnames > available.lst
+apt-cache search <package_name>
+apt-cache show <package_name>
+apt-cache showpkg <package_name>
+apt-cache depends <package_name>
+apt-cache rdepends <package_name>
+add-apt-repository ppa:<developer>/<repository>
+dpkg -l | grep <package_name>
+dpkg -L <package_name>
+dpkg -s <package_name>
+dpkg -S <fullfilename>
+dpkg --configure -a
+dpkg-reconfigure <package_name>
+dpkg --install --force-all file.deb
+dpkg --print-architecture
+dpkg --print-foreign-architectures
+dpkg --add-architecture i386
+dpkg-divert --local --rename --add /sbin/initctl
+dpkg-query -W --showformat='${Installed-Size}\t${Package}\n' | sort -nr | less
+
+# mengatur proxy langsung pada apt
+echo 'Acquire::http::Proxy "http://achmadi10@mhs.ep.its.ac.id:mekatro05@proxy.its.ac.id:8080";' >> /etc/apt/apt.conf
+echo 'Acquire::https::Proxy "https://achmadi10@mhs.ep.its.ac.id:mekatro05@proxy.its.ac.id:8080";' >> /etc/apt/apt.conf
+echo 'Acquire::ftp::Proxy "ftp://achmadi10@mhs.ep.its.ac.id:mekatro05@proxy.its.ac.id:8080";' >> /etc/apt/apt.conf
+
+# memastikan paket yang akan di instal adalah paket dependecies dan recommends
+echo 'APT::Install-Recommends "true";' > /etc/apt/apt.conf.d/00recommends
+echo 'APT::Install-Recommends "true";' > /etc/apt/apt.conf.d/99synaptic
+echo 'APT::Install-Recommends "true";' >> /etc/apt/apt.conf
+
+# mendapatkan alamat repositori dari alamat PPA dan Launchpad
+echo "ppa:colingille/freshlight > Google > deb http://ppa.launchpad.net/colingille/freshlight/ubuntu saucy main"
+echo "ppa:ravefinity-project/ppa > Google > wget http://ppa.launchpad.net/ravefinity-project/ppa/ubuntu/pool/main/h/humanity-colors/humanity-colors_15.04~vivid~Noobslab.com_all.deb"
+echo "https://launchpad.net/ubuntu/+archivemirrors"
+
+# repository utama
+echo "deb http://mirror.internode.on.net/pub/debian/ unstable main contrib non-free" >> /etc/apt/sources.list
+echo "deb http://mirror.internode.on.net/pub/ubuntu/ubuntu/ devel main restricted universe multiverse" >> /etc/apt/sources.list
+echo "deb http://mirror.internode.on.net/pub/linuxmint-packages/ rafaela main upstream import " >> /etc/apt/sources.list
+
+# pengaturan prioritas paket di repository berbeda
+echo "
+
+Package: *
+Pin: origin ftp.us.debian.org
+Pin-Priority: 950
+
+Package: *
+Pin: release a=unstable
+Pin-Priority: 700
+
+Package: *
+Pin: release a=testing
+Pin-Priority: 650
+
+Package: *
+Pin: release a=stable
+Pin-Priority: 600
+
+ " > /etc/apt/preferences
+
+# memilih paket terpakai di antara kumpulan paket dari file berisi daftar url paket di repository
+# contoh file daftar_paket.list
+# replace URL pool semisal http://mirror.internode.on.net/pub/ubuntu/ubuntu/pool/ dengan karakter kosong
+# replace karakter / dengan '
+mkdir folder_paket
+for i in `cat daftar_paket.list`; do echo $i | cut -d\' -f4 >> daftar_paket.txt;done
+for i in `cat daftar_paket.txt`; do mv -vf ./folder_paket_old/$i ./folder_paket/;done
+
+# membuat file format deb dengan contoh qtserialterminal
+# Size dan Filename pada DEBIAN/control tidak perlu di tulis karena itu bagian repository
+# Depends pada DEBIAN/control khusus untuk paket debman dikosongkan
+# format nama adalah nama-paket_versi_arsitektur
+# Installed-size dalam kb
+# Priority dan Section sesuai kebutuhan
+mkdir qtserialterminal_0.0.0_amd64
+mkdir qtserialterminal_0.0.0_amd64/usr
+mkdir qtserialterminal_0.0.0_amd64/usr/bin
+cp -vf qtserialterminal_0.0.0_amd64/usr/bin/qtserialterminal usr/bin/
+mkdir qtserialterminal_0.0.0_amd64/DEBIAN/
+echo "
+Package: qtserialterminal
+Priority: optional
+Section: universe/comm
+Installed-Size: 55
+Maintainer: Local Installation
+Architecture: amd64
+Version: 0.0.0
+Depends: libqt5serialport5 (>= 5.4.1-1), libqt5widgets5 (>= 5.4.1+dfsg-2ubuntu4)
+Description: A simple Qt serial port terminal
+" > qtserialterminal_0.0.0_amd64/DEBIAN/control
+# mengganti kepemilikan semua file ke root (optional)
+chown root:root -Rvf qtserialterminal_0.0.0_amd64/
+# membentuk file format deb
+dpkg --build qtserialterminal_0.0.0_amd64
+
+# membuat local repository
+# Untuk protokol lokal adalah file:///path untuk alamat /path
+mkdir ~/localrepository
+mkdir ~/localrepository/dists
+mkdir ~/localrepository/dists/local/
+mkdir ~/localrepository/dists/local/main
+mkdir ~/localrepository/dists/local/main/binary-amd64
+mkdir ~/localrepository/pool
+cp -vf qtserialterminal_0.0.0_amd64.deb ~/localrepository/pool/
+cd ~/localrepository/
+dpkg-scanpackages pool /dev/null | gzip -9cv > dists/local/main/binary-amd64/Packages.gz
+dpkg-scanpackages pool /dev/null | bzip2 -9cv > dists/local/main/binary-amd64/Packages.bz2
+echo "deb file:///home/development/Packages/localrepository/ local main" >> /etc/apt/sources.list
+
+# membuat local server repository
+apt-get install apache2
+mkdir /var/www/html/localrepository
+mkdir /var/www/html/localrepository/dists
+mkdir /var/www/html/localrepository/dists/local/
+mkdir /var/www/html/localrepository/dists/local/main
+mkdir /var/www/html/localrepository/dists/local/main/binary-amd64
+mkdir /var/www/html/localrepository/pool
+cp -vf qtserialterminal_0.0.0_amd64.deb /var/www/html/localrepository/pool/
+cd /var/www/html/localrepository/
+dpkg-scanpackages pool /dev/null | gzip -9cv > dists/local/main/binary-amd64/Packages.gz
+dpkg-scanpackages pool /dev/null | bzip2 -9cv > dists/local/main/binary-amd64/Packages.bz2
+echo "deb http://localhost/localrepository/ local main" >> /etc/apt/sources.list
